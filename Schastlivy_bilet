@@ -1,0 +1,37 @@
+#include <iostream>
+#include <sstream>
+using namespace std;
+int main()
+{
+    string number; // string для того, чтобы посчитать длину числа
+    int s, result, right = 0, left = 0, i; // длина числа и само число
+    stringstream container;
+    setlocale(LC_ALL, "rus");
+    cout << "Введите номер билета" << endl;
+    cin >> number;
+    s = number.size();
+    container.clear();
+    container << number;
+    container >> result; // введённое число в формате int
+    for (i = 1; i <= s; ++i)
+    {
+        if (i <= (s - s / 2))
+            {
+                right += result % 10;
+            };
+        if (i > (s / 2))
+            {
+                left += result % 10;
+            };
+        result /=10;
+    };
+    if (right == left)
+    {
+       cout << "Счастливый билет";
+    }
+    else
+    {
+        cout << "Несчастливый билет";
+    };
+    return 0;
+}
