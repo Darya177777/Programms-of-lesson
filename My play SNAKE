@@ -1,0 +1,112 @@
+#include <stdlib.h>
+#include <iostream>
+#include <Windows.h>   //Для использования WinApi
+#include <conio.h>
+#include <ctime>
+using namespace std;
+int main() {
+    system("CLS");
+    // 5 строк ниже убирают мигающий курсор
+    void* handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO structCursorInfo;
+    GetConsoleCursorInfo(handle, &structCursorInfo);
+    structCursorInfo.bVisible = FALSE;
+    SetConsoleCursorInfo(handle, &structCursorInfo);
+    HWND hwnd = GetConsoleWindow(); // Открываем окно
+    HDC dc = GetDC(hwnd); // Подключаемся к нему
+    HBRUSH brush; // brush - это кисть.
+    int x = 1, y = 1, code = 0, i, j, k, code_p = 68, ind = 0, len_of_snake = 7, x_of_berry, y_of_berry, count_of_berry = 10; // необходимые переменные
+    bool win = false;
+    int A[100][2], B[10][2]; // координаты хвоста змейки, ягод
+// Начальный экран -----------------------------------------------------------------------
+    SetTextColor(dc, RGB(30, 240, 255));
+    TextOutW(dc, 200, 120, L"Welcome to SNAKE!", 17);
+// генерация и отрисовка ягод -----------------------------------------------------------------------------------
+    srand((unsigned int)(time(0)));
+    brush = CreateHatchBrush(HS_DIAGCROSS, RGB(255, 40, 34));
+    SelectObject(dc, brush);
+    for (i = 0; i <= 9; ++i)
+    {
+        x_of_berry = rand() % 46;
+        y_of_berry = rand() % 22;
+        B[i][0] = x_of_berry;
+        B[i][1] = y_of_berry;
+        Rectangle(dc, x_of_berry * 20, y_of_berry * 20, x_of_berry * 20 + 20, y_of_berry * 20 + 20);
+    }
+    DeleteObject(brush); 
+// игровой цикл ---------------------------------------------------------------------------------------------------
+    while (code != 27) // escape
+    {
+// изменение координат змейки --------------------------------------------------------------------------------- 
+        if (code_p == 87) //W
+            y = y - 1;
+        if (code_p == 65) //A
+            x = x - 1;
+        if (code_p == 83) //S
+            y = y + 1;
+        if (code_p == 68) //D
+            x = x + 1;
+// проверка врезания в стену ----------------------------------------------------------------------------
+        if (y < 0 || x < 0 || y > 23 || x > 47) 
+            code = 27;
+// проверка съедания хвоста --------------------------------------------------------------------------------
+        for (k = 0; k <= len_of_snake; ++k)
+            if (A[k][0] == x && A[k][1] == y)
+                code = 27;
+// отрисовка змейки -----------------------------------------------------------------------------------
+        brush = CreateHatchBrush(HS_DIAGCROSS, RGB(30, 240, 234));
+        SelectObject(dc, brush);
+        Rectangle(dc, x * 20, y * 20, x * 20 + 20, y * 20 + 20); 
+        A[ind % len_of_snake][0] = x;
+        A[ind % len_of_snake][1] = y;
+        ind += 1;
+        DeleteObject(brush);
+// проверка съедания ягод и победы ------------------------------------------------
+        for (j = 0; j <= 9; ++j)
+        {
+            if (B[j][0] == x && B[j][1] == y && len_of_snake <= 100)
+            {
+                count_of_berry -= 1;
+                if (ind / len_of_snake >= 1)
+                    ind = len_of_snake + 1 + ind % len_of_snake;
+                else
+                    ind = ind % len_of_snake;
+                len_of_snake += 1;
+            }
+        }
+        if (count_of_berry == 0)
+        {
+            win = true;
+            code = 27;
+        }
+// закрашивание хвоста, передвижение змейки ------------------------------------------------------------
+        brush = CreateSolidBrush(RGB(0, 0, 0));
+        SelectObject(dc, brush);
+        if (ind / len_of_snake >= 1)
+            Rectangle(dc, A[ind % len_of_snake][0] * 20, A[ind % len_of_snake][1] * 20, A[ind % len_of_snake][0] * 20 + 20, A[ind % len_of_snake][1] * 20 + 20);
+        DeleteObject(brush); 
+ // Проверка нажатия управляющих клавиш -------------------------------------------------------------------------------------
+        if (_kbhit()) {
+            code = _getch();
+            if (code == 87 || code == 119 || code == 230 || code == 150) //W, w, ц, Ц
+                code_p = 87;           
+            if (code == 65 || code == 97 || code == 228 || code == 148) //A, a, ф, Ф
+                code_p = 65;
+            if (code == 83 || code == 115 || code == 235 || code == 155) //S, s, ы, Ы
+                code_p = 83;
+            if (code == 68 || code == 100 || code == 162 || code == 130) //D, d, в, В
+                code_p = 68;
+        }
+        Sleep(300); // замедление темпа движения змейки
+    }
+// Конечные экраны проигрыша и выигрыша -----------------------------------------------------------------------------------------------
+    brush = CreateSolidBrush(RGB(0, 0, 0));
+    SelectObject(dc, brush);
+    Rectangle(dc, 0, 0, 930, 450);
+    if (win == true)
+        TextOutW(dc, 300, 170, L"You win!", 14);
+    else
+        TextOutW(dc, 300, 170, L"You lose!", 14);
+    ReleaseDC(hwnd, dc); //Освобождаем контекст устройства
+    cin.get();
+}
